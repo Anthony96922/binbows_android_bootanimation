@@ -22,7 +22,20 @@ $(TARGET_GENERATED_BOOTANIMATION): $(SOONG_ZIP)
 	@rm -rf $(dir $@)
 	@mkdir -p $(INTERMEDIATES)
 	$(hide) tar xfp vendor/ms/bootanimation/bootanimation.tar -C $(INTERMEDIATES)
-	prebuilts/tools-lineage/${HOST_OS}-x86/bin/mogrify -colors 256 $(INTERMEDIATES)/*/*.png;
+	$(hide) if [ $(TARGET_SCREEN_WIDTH) -gt $(TARGET_SCREEN_HEIGHT) ]; then \
+	    IMAGEHEIGHT=$(TARGET_SCREEN_HEIGHT); \
+	    IMAGEWIDTH=$$(expr 640 * $(TARGET_SCREEN_HEIGHT) / 480); \
+        else \
+	    IMAGEHEIGHT=$$(expr 480 * $(TARGET_SCREEN_WIDTH) / 640); \
+	    IMAGEWIDTH=$(TARGET_SCREEN_WIDTH); \
+	fi; \
+	if [ "$(TARGET_BOOTANIMATION_HALF_RES)" = "true" ]; then \
+	    IMAGEWIDTH=$$(expr $$IMAGEWIDTH / 2); \
+	    IMAGEHEIGHT=$$(expr $$IMAGEHEIGHT / 2); \
+	fi; \
+	RESOLUTION="$$IMAGEWIDTH"x"$$IMAGEHEIGHT"; \
+	prebuilts/tools-lineage/${HOST_OS}-x86/bin/mogrify -resize $$RESOLUTION -colors 256 $(INTERMEDIATES)/*/*.png;
+	echo "$$IMAGEWIDTH $$IMAGEHEIGHT 60" > $(INTERMEDIATES)/desc.txt; \
 	cat vendor/ms/bootanimation/desc.txt >> $(INTERMEDIATES)/desc.txt
 	$(hide) $(SOONG_ZIP) -L 0 -o $@ -C $(INTERMEDIATES) -D $(INTERMEDIATES)
 
